@@ -1,0 +1,253 @@
+\documentclass[11pt]{article}
+\usepackage{amssymb}
+% Language setting
+% Replace `english' with e.g. `spanish' to change the document language
+\usepackage[english]{babel}
+
+% Set page size and margins
+% Replace `letterpaper' with `a4paper' for UK/EU standard size
+\usepackage[a4paper,top=2cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+
+% Useful packages
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+
+\title{\textbf{Bayes Factor}}
+\author{Zeyong Jin}
+
+\begin{document}
+\maketitle
+
+\tableofcontents
+
+\newpage
+
+\section{Bayesian Hypothesis Testing}
+
+\subsection{Notation}
+
+Unknowns are $\mathcal{H}_{0}$ and $\mathcal{H}_{1}$.
+
+Put a prior on the actual hypotheses/models, that is, on $\pi\left(\mathcal{H}_{0}\right)=\operatorname{Pr}\left(\mathcal{H}_{0}=\right.$ True$)$ and $\pi\left(\mathcal{H}_{1}\right)=\operatorname{Pr}\left(\mathcal{H}_{1}=\right.$ True$)$.
+
+\subsection{Bayesian Approach}
+
+\begin{enumerate}
+    \item Put a prior on $\theta, \pi(\theta)=\mathcal{N}\left(\theta_{0}, 1 / \tau_{0}^{2}\right)$.
+    \item Compute posterior $\theta \mid y^{(n)} \sim \mathcal{N}\left(\theta_{n}, 1 / \tau_{n}^{2}\right)$ for updated parameters $\theta_{n}$ and $\tau_{n}^{2}$.
+\end{enumerate}
+
+\subsection{Expression}
+
+Using Bayes Theorem, we have:
+
+\begin{equation}
+    \pi(\mathcal{H}_1 | Y) = \frac{p(y^{(n)} | \mathcal{H}_1)\pi(\mathcal{H}_1)}{p(y^{(n)} | \mathcal{H}_0)\pi(\mathcal{H}_0) + p(y^{(n)} | \mathcal{H}_1)\pi(\mathcal{H}_1)}
+\end{equation}
+
+\noindent
+where $p(y^{(n)} | \mathcal{H}_1)$ and $p(y^{(n)} | \mathcal{H}_0)$ are the marginal likelihoods hypotheses.
+
+\bigskip
+
+\noindent
+If for example we set $\pi(\mathcal{H}_1) = 0.5$ and $\pi(\mathcal{H}_0) = 0.5$ as a \textit{priori}, then
+
+\begin{align*}
+    \pi(\mathcal{H}_1 | Y) &=  \frac{0.5p(y^{(n)} | \mathcal{H}_1)\pi(\mathcal{H}_1)}{0.5p(y^{(n)} | \mathcal{H}_0) + 0.5p(y^{(n)} | \mathcal{H}_1)} \\
+    &= \frac{p(y^{(n)}| \mathcal{H}_1)}{p(y^{(n)}| \mathcal{H}_0) + p(y^{(n)}| \mathcal{H}_1)} \\
+    &= \frac{1}{\frac{p(y^{(n)}| \mathcal{H}_0)}{p(y^{(n)}| \mathcal{H}_1)}+1}
+\end{align*}
+
+\subsection{Difficulty}
+
+A major difficulty in the implementation of Bayesian hypothesis testing is the choice of the needed prior distributions of unknown parameters. \cite{Berger:2011fuz}
+
+\bigskip
+\noindent
+For a simple normal model, the only unknown parameter is $\theta$
+
+\begin{itemize}
+    \item Under $\mathcal{H}_{0}, \theta=0$ with probability 1.
+    \item Under $\mathcal{H}_{0}, \theta \in \mathbb{R}$ Could take $\pi(\theta)=\mathcal{N}(\theta_{0}, \frac{1}{\tau_{0}^{2}})$.
+    \item Compute marginal likelihoods for each hypothesis, that is, $\mathcal{L}\left(\mathcal{H}_{0}\right)$ and $\mathcal{L}\left(\mathcal{H}_{1}\right)$.
+    \item Obtain posterior probabilities of $\mathcal{H}_{0}$ and $\mathcal{H}_{1}$ via Bayes Theorem. 
+\end{itemize}
+
+\subsection{Loss Function}
+
+Loss function:
+
+\begin{equation}
+    L(\hat{\mathcal{H}}, \mathcal{H})=w_{1} 1(\hat{\mathcal{H}}=1, \mathcal{H}=0)+w_{2} 1(\hat{\mathcal{H}}=0, \mathcal{H}=1)
+\end{equation}
+
+\begin{itemize}
+    \item $w_{1}$ weights how bad making a Type I error.
+    \item $w_{2}$ weights how bad making a Type II error.
+\end{itemize}
+
+\subsubsection{Example: 0 - 1 Loss}
+
+$0-1$ loss is the loss function $L(h, d)=\mathbf{1}(h \neq d)$, i.e., you lose 1 if wrong, 0 if right.
+
+- The posterior expected loss in this case is
+
+$$
+\begin{aligned}
+\mathrm{E}(L(H, d) \mid x) &=\sum_{h} L(h, d) p(H=h \mid x) \\
+&=\sum_{h} \mathbf{1}(h \neq d) p(H=h \mid x) \\
+&=1-p(H=d \mid x) .
+\end{aligned}
+$$
+
+- So, to minimize our posterior expected loss, the optimal decision $d^{*}$ (under $0-1$ loss) is the hypothesis with highest posterior probability $p(H=d \mid x)$.
+
+- In the case of two hypotheses, $\mathrm{H}_{0}$ and $\mathrm{H}_{1}$,
+
+$$
+d^{*}= \begin{cases}
+\mathrm{H}_{0} & \text { if } p\left(\mathrm{H}_{0} \mid x\right)>1 / 2 \\ 
+\mathrm{H}_{1} & \text { if } p\left(\mathrm{H}_{1} \mid x\right)>1 / 2 \\ 
+\text { either } & \text { otherwise. }\end{cases}
+$$
+
+\section{Bayes Factor}
+
+\subsection{Precondition}
+To calculate a Bayes factor, we must first specify a model of the data assuming there is a true effect. \cite{10.1093/geronb/gby065}
+
+\subsection{Definition}
+
+\begin{equation}
+    Bayes \: Factor = \frac{p(y^{(n)}| \mathcal{H}_0)}{p(y^{(n)}| \mathcal{H}_1)},
+\end{equation}
+
+where \begin{equation}
+    p\left(y^{(n)} \mid \mathcal{H}_{k}\right)=\int f\left(y^{(n)} \mid \boldsymbol{\theta}, \sigma^{2}, \mathcal{H}_{k}\right) \pi\left(\boldsymbol{\theta} \mid \sigma^{2},\mathcal{H}_{k}\right) \pi\left(\sigma^{2} \mid \mathcal{H}_{k}\right) \mathrm{d} \boldsymbol{\theta} \mathrm{d} \sigma^{2}
+\end{equation} 
+
+is the marginal probability of the data under model $\mathcal{H}_{k}$. \cite{10.1093/biostatistics/kxy049} 
+
+(2) is known as the \textbf{Bayes Factor} in favor of $\mathcal{H}_0$, and often written as $\mathcal{B}\mathcal{F}_{01}$.
+
+When estimating the posterior distribution of $\boldsymbol{\theta}$ under each model, we find the hyperparameters, namely $\lambda, \boldsymbol{\mu}_{\mathbf{0}}, a_{0}$, and $b_{0}$, have little effects on the posterior distributions in general. We use $\lambda=1$ for precision parameter following the recommendations in \cite{doi:10.1080/01621459.1995.10476572}. 
+
+\subsection{Interpretation by Weight}
+
+Bayes factor is a ratio of marginal likelihoods and it provides a \textbf{weight of evidence} in the data in favor of one model over another. It is often used as an alternative to the frequentist p-value. $\mathcal{B}\mathcal{F}_{01} > 10$ is strong, $\mathcal{B}\mathcal{F}_{01} > 100$ is decisive (Rule of thumb).
+
+\subsection{Alternative Interpretation by Odds}
+
+Bayes factor can be thought of as the factor by which our \textbf{prior odds change} (towards the posterior odds) in the light of the data. 
+
+$$
+\begin{aligned}
+& \frac{\pi\left(\mathcal{H}_{0} \mid Y\right)}{\pi\left(\mathcal{H}_{1} \mid Y\right)}=\frac{p\left(y^{(n)} \mid \mathcal{H}_{0}\right) \pi\left(\mathcal{H}_{0}\right)}{p\left(y^{(n)} \mid \mathcal{H}_{0}\right) \pi\left(\mathcal{H}_{0}\right)+p\left(y^{(n)} \mid \mathcal{H}_{1}\right) \pi\left(\mathcal{H}_{1}\right)} \div \frac{p\left(y^{(n)} \mid \mathcal{H}_{1}\right) \pi\left(\mathcal{H}_{1}\right)}{p\left(y^{(n)} \mathcal{H}_{0}\right) \pi\left(\mathcal{H}_{0}\right)+p\left(y^{(n)} \mid \mathcal{H}_{1}\right) \pi\left(\mathcal{H}_{1}\right)} \\
+& =\frac{p\left(y^{(n)} \mid \mathcal{H}_{0}\right) \pi\left(\mathcal{H}_{0}\right)}{p\left(y^{(n)} \mid \mathcal{H}_{0}\right) \pi\left(\mathcal{H}_{0}\right)+p\left(y^{(n)} \mid \mathcal{H}_{1}\right) \pi\left(\mathcal{H}_{1}\right)} \times \frac{p\left(y^{(n)} \mid \mathcal{H}_{0}\right) \pi\left(\mathcal{H}_{0}\right)+p\left(y^{(n)} \mid \mathcal{H}_{1}\right) \pi\left(\mathcal{H}_{1}\right)}{p\left(y^{(n)} \mid \mathcal{H}_{1}\right) \pi\left(\mathcal{H}_{1}\right)} \\
+& \therefore \underbrace{\frac{\pi\left(\mathcal{H}_{0} \mid Y\right)}{\pi\left(\mathcal{H}_{1} \mid Y\right)}}_{\text {posterior odds }}=\underbrace{\frac{\pi\left(\mathcal{H}_{0}\right)}{\pi\left(\mathcal{H}_{1}\right)}}_{\text {prior odds }} \times \underbrace{\frac{p\left(y^{(n)} \mid \mathcal{H}_{0}\right)}{p\left(y^{(n)} \mid \mathcal{H}_{1}\right)}}_{\text {Bayes factor } \mathcal{B} \mathcal{F}_{01}}
+\end{aligned}
+$$
+
+\subsection{Candidate's Formula}
+
+Alternative expression for Bayes Factor
+
+\begin{equation}
+    \frac{p(y^{(n)}| \mathcal{H}_0)}{p(y^{(n)}| \mathcal{H}_1)} = \frac{\pi_{\theta}(0 | y^{(n)}, \mathcal{H}_1)}{\pi_{\theta}(0 | \mathcal{H}_1)}
+\end{equation}
+
+\noindent
+\subsubsection{Interpretation} 
+Ratio of the prior to posterior densities for $\theta$ evaluated at 0.
+
+\subsection{BMA}
+
+The BMA posterior relies on the Bayes factor as the weighting factor, favoring one model over using weights based on $\mathcal{B}\mathcal{F}_{01}$. 
+
+Given an established association, we expect the Bayes factor provide evidence supporting one of the two models. Intuitively, if $\mathcal{B}\mathcal{F}_{01}$ then we have \textbf{more support} for $\mathcal{H}_0$ from the data and vice versa when $\mathcal{B}\mathcal{F}_{01}<1$. \cite{10.1093/biostatistics/kxy049} 
+
+\section{Controlling for look-elsewhere effects}
+
+A major strength of Bayesian analysis is that it easily (and often automatically) adjusts for look-elsewhere effects.
+
+\subsection{Multiple Hypotheses}
+
+\subsubsection{Key Idea}
+
+The point here is that the marginal likelihood of hypothesis $H_{i}$ gets automatically \textbf{down-weighted} by $\frac{1}{m}$, the 'cost' of looking in $m$ different bins. \cite{Berger:2011fuz}
+
+\subsubsection{Process}
+
+Suppose $N_{j}$ of the $X_{i}$ are in bin $B_{j}, j=1, \ldots, m$, and that we assume we have only densities $f_{s}\left(B_{j}\right)$ and $f_{b}\left(B_{j}\right)$. Then
+
+\begin{equation}
+    B_{10}=\frac{\int_{0}^{\infty} \int_{0}^{\infty} b^{N} e^{-(b+s)} \prod_{i=1}^{m}\left[1+\frac{s f_{s}\left(B_{j}\right)}{b f_{b}\left(B_{j}\right)}\right]^{N_{j}} \pi_{0}(b) \pi_{1}(s \mid b) d s d b}{\int_{0}^{\infty} b^{N} e^{-b} \pi_{0}(b) d b} .
+\end{equation}
+
+Suppose, in addition, that $f_{s}\left(B_{j}\right)$ gives probability one to some unknown bin $B$, with each bin being equally likely. This is equivalent to saying that we are testing the mutually exclusive hypotheses: $H_{j}$ : signal is only in bin $B_{j}$, with the hypotheses having equal prior probability. Then
+
+\begin{equation}
+    \begin{aligned}
+    B_{10} &=\frac{E^{B}\left[\int_{0}^{\infty} \int_{0}^{\infty} b^{N} e^{-(b+s)} \prod_{i=1}^{m}\left[1+\frac{s f_{s}(B)}{b f_{b}\left(B_{j}\right)}\right]^{N_{j}} \pi_{0}(b) \pi_{1}(s \mid b) d s d b\right]}{\int_{0}^{\infty} b^{N} e^{-b} \pi_{0}(b) d b} \\
+    &=\frac{\frac{1}{m} \sum_{j=1}^{m} \int_{0}^{\infty} \int_{0}^{\infty} b^{N} e^{-(b+s)}\left[1+\frac{s}{b f_{b}\left(B_{j}\right)}\right]^{N_{j}} \pi_{0}(b) \pi_{1}(s \mid b) d s d b}{\int_{0}^{\infty} b^{N} e^{-b} \pi_{0}(b) d b} .
+\end{aligned}
+\end{equation}
+
+\subsection{The difficulty in frequentist control of the look-elsewhere effect}
+
+Type I error that would result from a single test. Thus the needed frequentist control for multiple testing ranges from the drastic Bonferroni correction to none, depending on the correlations among the data.
+
+In contrast, the Bayesian adjustment for multiple testing does not depend on correlations among the data, and occurs only through the choice of prior probabilities of hypotheses. In the above scenario, for instance, one might assign prior probability $\frac{1}{2}$ to no signal, and assign each of the possible alternative hypotheses prior probability of $\frac{1}{2 m}$. The ensuing Bayesian analysis correctly controls for the look-elsewhere effect, \textbf{regardless of the data distribution}.
+
+\section{Bayesian Inference}
+
+\subsection{Conceptualizing Hypothesis Testing via Bayes Factors}
+
+Simulating data many times from the posterior distribution will ideally yield representative samples of the unknown parameter that we can interpret to answer the research question. \cite{10.1093/ntr/ntz207}
+ 
+In the context of Bayesian inference, hypothesis testing can be framed as a special case of model comparison where a model refers to a likelihood function and a prior distribution. 
+ 
+The combination of the likelihood function for the observed data with each of the prior distributions yields hypothesis-specific models. For each of the hypothesis-specific models, averaging (ie, integrating) the likelihood with respect to the prior distribution across the entire parameter space yields the probability of the data under the model and, therefore, the corresponding hypothesis. This quantity is more commonly referred to as the marginal likelihood and represents the average fit of the model to the data. The ratio of the marginal likelihoods for both hypothesis-specific models is known as the Bayes factor. 
+
+The Bayes factor represents how we should update our knowledge about the hypotheses after examining data. 
+
+\subsection{Properties}
+
+\begin{enumerate}
+    \item Bayes factors can provide direct evidence for the common null hypothesis of no difference.
+    \item Bayes factors can reveal when experimental data is insensitive to the null and alternative hypotheses, clearly suggesting that the researcher should withhold judgment
+    \item Bayes factors can be interpreted \textbf{continuously} and thus provide an indication of the strength of the evidence for the null or alternative hypothesis. 
+\end{enumerate}
+
+\subsection{Objectives}
+
+To specify a model for the data if there is a true effect would be to consider the range of possible results based on the scale used in the research. The maximum possible effect when calculating proportions is a difference of 1. \cite{10.1093/geronb/gby065}
+
+Smaller differences should be more plausible. We can model this prior belief about smaller differences being more likely than larger differences by using a half-normal distribution, with an $S D$ of 0.5.
+
+\subsection{Recommendation}
+
+Reporting robustness regions for each Bayes factor that is reported. \cite{10.1093/geronb/gby065}
+
+\subsubsection{Robustness Region}
+A robustness region specifies the range of expected effect sizes used when specifying the alternative model that support the same conclusion (e.g., evidence for $\mathrm{H}_1$, evidence for $\mathrm{H}_0$, or inconclusive outcomes). Robustness regions are reported as Rob. Reg. [L, U], and give the lower and upper effect size for the alternative model that leads to the same conclusion, given a certain Bayes factor threshold. 
+
+\subsection{Comparison}
+
+Bayes factors calculated for different alternative hypotheses can be compared in such a way when they have been calculated using the same data and against the same model of $\mathrm{HO}$ $\left.\left(B_{\mathrm{H}_1 / \mathrm{H}_0} / B_{\mathrm{H}_2 / \mathrm{H}_0}=B_{\mathrm{H}_1 / \mathrm{H}_2}\right).\right]$. 
+
+\subsubsection{Explanation}
+
+Based on the best estimate of which effect sizes would be reasonable (based on related earlier research), the data are nonevidential.
+
+
+
+
+
+\section{References}
+\bibliographystyle{apalike}
+\bibliography{sample}
+
+\end{document}
